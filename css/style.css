@@ -55,3 +55,9 @@
     letter-spacing: 0.05em;
     color: #000000
 }
+
+.modal-body {
+    display: flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+}
