@@ -1,3 +1,41 @@
+const URL_API = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses/';
+
+function send(onError, onSuccess, url, method = 'GET', data = '', headers = {}, timeout = 60000) {
+ 
+    let xhr;
+  
+    if (window.XMLHttpRequest) {
+      // Chrome, Mozilla, Opera, Safari
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { 
+      // Internet Explorer
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+  
+    for([key, value] of Object.entries(headers)) {
+        xhr.setRequestHeader(key, value)
+    }
+  
+    xhr.timeout = timeout; 
+  
+    xhr.ontimeout = onError;
+  
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if(xhr.status < 400) {
+                onSuccess(xhr.responseText)
+            } else if (xhr.status >= 400) {
+                onError(xhr.status)
+            }
+        }
+    }
+  
+    xhr.open(method, url, true);
+  
+    xhr.send(data);
+}
+
+
 function getCounter() {
     let last = 0;
   
@@ -76,10 +114,11 @@ class Cart {
         const idx = this.list.findIndex((stack) => stack.getGoodId() == good.id)
   
         if(idx >= 0) {
-            this.list[idx].add()
+            this.list[idx].add();
         } else {
-            this.list.push(new GoodStack(good))
+            this.list.push(new GoodStack(good));
         }
+        this.render();
   
     }
   
@@ -93,7 +132,7 @@ class Cart {
                 this.list.splice(idx, 1)
             }
         } 
-  
+        this.render();
     }
 
     render() {
@@ -108,13 +147,33 @@ class Showcase {
         this.list = [];
         this.cart = cart;
     }
+
+    _onSuccess(response) {
+        const data = JSON.parse(response)
+        data.forEach(product => {
+            this.list.push(
+                new Good({id: product.id_product, title:product.product_name, price:product.price})
+            )
+        });
+    }
+
+    _onError(err) {
+        console.log(err);
+    }
   
     fetchGoods() {
-        this.list = [
-            new Good({id: 1, title: 'Футболка', price: 140}),
-            new Good({id: 2, title: 'Брюки', price: 320}),
-            new Good({id: 3, title: 'Галстук', price: 24})
-        ]
+        let pr = new Promise((resolve, reject) => {
+            send(reject, resolve, `${URL_API}catalogData.json`)
+        })
+        .then((response) => {
+            this._onSuccess(response)
+            return response
+        })
+        .then(() => {
+            this.render();
+        })
+        return pr
+        
     }
   
     addToCart(id) {
@@ -137,16 +196,15 @@ class Showcase {
 const cart = new Cart()
 const showcase = new Showcase(cart)
   
-showcase.fetchGoods();
+let prom = showcase.fetchGoods();
 
-showcase.render();
-  
-showcase.addToCart(1)
-showcase.addToCart(1)
-showcase.addToCart(1)
-showcase.addToCart(3)
-cart.render();  
-cart.remove(1)
-  
-  
+prom.then(() => {
+
+    showcase.addToCart(123)
+    showcase.addToCart(123)
+    showcase.addToCart(123)
+    showcase.addToCart(456)
+    cart.remove(123);
+})
+    
 console.log(showcase, cart)
