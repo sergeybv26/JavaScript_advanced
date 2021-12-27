@@ -1,7 +1,7 @@
 .top {
 	background-color: #dcdcdc;
 	display: flex;
-	justify-content: flex-end;
+	justify-content: space-around;
 }
 .cart-button {
 	background: #5A98D0;
@@ -60,4 +60,17 @@
     display: flex;
 	flex-wrap: wrap;
 	justify-content: space-around;
+}
+
+.form__input_item {
+    list-style-type: none;
+    margin-bottom: 20px;
+}
+
+.error_text {
+    color: red;
+}
+
+.input_error {
+    border-color: red;
 }
