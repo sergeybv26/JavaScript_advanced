@@ -208,3 +208,93 @@ prom.then(() => {
 })
     
 console.log(showcase, cart)
+
+
+// В тексте с прямой речью заменить одинарные кавычки на двойные
+
+let modifyButton = document.getElementById('modify_text')
+modifyButton.addEventListener('click', function(){
+    let text = document.getElementById('text');
+    let textOld = text.textContent;
+    text.innerText = textOld.replace(/\B'|'\B/g, '"');
+})
+
+
+// Форма обратной связи с валидацией введенных данных
+
+let inputArea = document.getElementsByClassName('form__input')
+let errorTexts = document.getElementsByClassName('error_text')
+
+function resetErrors() {
+    for (let i = 0; i < inputArea.length; i++) {
+        let objectClass = inputArea[i].classList;
+        if (objectClass.contains('input_error')) {
+            objectClass.remove('input_error');
+        }
+    }
+
+    for (let i = 0; i < errorTexts.length; i++) {
+        errorTexts[i].innerText = '';
+    }
+}
+
+let formButton = document.getElementById('send_feedback')
+formButton.addEventListener('click', function(){
+    let form = document.forms.feedbackForm;
+    let formHead = document.getElementById('form__head');
+    let name = form.elements.name;
+    let email = form.elements.email;
+    let phone = form.elements.phone;
+    let nameRegexp = /^[A-Za-zА-Яа-я ]+$/;
+    let emailRegexp = /^[-._a-z0-9]+@(?:[a-z0-9][-a-z0-9]+\.)+[a-z]{2,6}$/;
+    let phoneRegexp = /^\+\d{1}\(\d{3}\)\d{3}-\d{4}$/;
+    let flag = false;
+    resetErrors();
+    console.log('form_validate');
+    
+    if (name.value == '') {
+        errorTexts[0].innerText = 'Поле "Имя" обязательно для заполнения';
+        name.classList.add('input_error');
+        flag = false;
+
+    } else if (!name.value.match(nameRegexp)) {
+        errorTexts[0].innerText = 'Имя может содержать только буквы';
+        name.classList.add('input_error');
+        flag = false;
+    } else {
+        flag = true;
+    }
+
+    if (email.value == '') {
+        errorTexts[1].innerText = 'Поле "E-mail" обязательно для заполнения';
+        email.classList.add('input_error');
+        flag = false;
+
+    } else if (!email.value.match(emailRegexp)) {
+        errorTexts[1].innerText = 'E-mail должен иметь вид mymail@mail.ru, или my.mail@mail.ru, или my-mail@mail.ru.';
+        email.classList.add('input_error');
+        flag = false;
+    } else {
+        flag = true;
+    }
+
+    if (phone.value == '' || phone.value == '+7(000)000-0000') {
+        errorTexts[2].innerText = 'Поле "Телефон" обязательно для заполнения';
+        phone.classList.add('input_error');
+        flag = false;
+
+    } else if (!phone.value.match(phoneRegexp)) {
+        errorTexts[2].innerText = 'Телефон должен иметь вид +7(000)000-0000';
+       phone.classList.add('input_error');
+       flag = false;
+    } else {
+        flag = true;
+    }
+
+    if (flag) {
+        formHead.innerText = 'Форма отправлена, спасибо';
+    } else {
+        formHead.innerText = 'Ошибка в заполнении формы';
+    }
+
+})
