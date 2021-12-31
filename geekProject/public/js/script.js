@@ -1,4 +1,4 @@
-const URL_API = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses/';
+const URL_API = 'http://localhost:3000/api/v1/';
 
 function send(onError, onSuccess, url, method = 'GET', data = '', headers = {}, timeout = 60000) {
  
@@ -163,7 +163,7 @@ class Showcase {
   
     fetchGoods() {
         let pr = new Promise((resolve, reject) => {
-            send(reject, resolve, `${URL_API}catalogData.json`)
+            send(reject, resolve, `${URL_API}showcase/`)
         })
         .then((response) => {
             this._onSuccess(response)
@@ -200,11 +200,11 @@ let prom = showcase.fetchGoods();
 
 prom.then(() => {
 
-    showcase.addToCart(123)
-    showcase.addToCart(123)
-    showcase.addToCart(123)
-    showcase.addToCart(456)
-    cart.remove(123);
+    showcase.addToCart(1)
+    showcase.addToCart(2)
+    showcase.addToCart(3)
+    showcase.addToCart(1)
+    cart.remove(3);
 })
     
 console.log(showcase, cart)
