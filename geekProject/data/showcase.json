@@ -1,17 +1,17 @@
 [
     {
-        "id_product": 1,
-        "product_name": "Ноутбук",
+        "id": 1,
+        "title": "Ноутбук",
         "price": 45600
     },
     {
-        "id_product": 2,
-        "product_name": "Мышка",
+        "id": 2,
+        "title": "Мышка",
         "price": 1000
     },
     {
-        "id_product": 3,
-        "product_name": "Принтер",
+        "id": 3,
+        "title": "Принтер",
         "price": 5600
     }
 ]

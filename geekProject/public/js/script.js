@@ -63,10 +63,6 @@ class Good {
     getTitle() {
         return this.title;
     }
-
-    render() {
-        return `<div class="goods-item"><h3 class='goods-item_title'>${this.title}</h3><p class='goods-item_price'>${this.price} руб.</p></div>`;
-    }
 }
   
 class GoodStack {
@@ -87,6 +83,14 @@ class GoodStack {
     getCount() {
         return this.count;
     }
+
+    getTitle() {
+        return this.good.getTitle();
+    }
+
+    getPrice() {
+        return this.good.getPrice() * this.count;
+    }
   
     add() {
         this.count++;
@@ -97,17 +101,32 @@ class GoodStack {
         this.count--;
         return this.count;
     }
-
-    render() {
-        return `<div class="goods-item"><h3 class='goods-item_title'>${this.getGood().title}</h3>
-        <p class='goods-item_price'>Цена: ${this.getGood().price} руб.</p>
-        <p class='goods-item_price'>Количество: ${this.count} шт.</p></div>`;
-    }
 }
   
 class Cart {
     constructor(){
-        this.list = []
+        this.list = [];
+        this.view = new CartView('.modal');
+        this.view.setRemoveClickHandler(this.remove.bind(this));
+    }
+
+    fetchGoods() {
+        fetch(`${URL_API}cart`)
+        .then((res) => {
+            return res.json()
+        })
+        .then((data) => {
+            data.map((item) => this.add(new Good(item)));
+        })
+    }
+
+    open() {
+        this.view.render(this.list);
+        this.view.open();
+    }
+
+    close() {
+        this.view.close();
     }
   
     add(good) {
@@ -118,27 +137,31 @@ class Cart {
         } else {
             this.list.push(new GoodStack(good));
         }
-        this.render();
+        this.view.render(this.list);
   
     }
   
     remove(id) {
-        const idx = this.list.findIndex((stack) => stack.getGoodId() == id)
+        const idx = this.list.findIndex((stack) => stack.getGoodId() == id);
   
         if(idx >= 0) {
-            this.list[idx].remove()
+            fetch(`${URL_API}cart/`, {
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                body: JSON.stringify(this.list[idx].getGood())
+            })
+            .then((res) => {
+                this.list[idx].remove();
   
-            if(this.list[idx].getCount() <= 0) {
-                this.list.splice(idx, 1)
-            }
+                if(this.list[idx].getCount() <= 0) {
+                    this.list.splice(idx, 1);
+                }
+                this.view.render(this.list);
+            })        
         } 
-        this.render();
-    }
-
-    render() {
-        let listHTML = '';
-        this.list.forEach(good => {listHTML += good.render()});
-        document.querySelector('.modal-body').innerHTML = listHTML;
+        this.view.render(this.list);
     }
 }
   
@@ -146,33 +169,36 @@ class Showcase {
     constructor(cart){
         this.list = [];
         this.cart = cart;
+        this.filtred = [];
+
+        this.view = new ShowcaseView('.goods-list');
+
+        this.searchInput = document.querySelector('#search-input');
+        this.searchButton = document.querySelector('#search-btn');
+
+        this.searchButton.addEventListener('click', this.filter);
+
+        this.view.setBuyClickHandler(this.addToCart.bind(this));
     }
 
-    _onSuccess(response) {
-        const data = JSON.parse(response)
-        data.forEach(product => {
-            this.list.push(
-                new Good({id: product.id_product, title:product.product_name, price:product.price})
-            )
-        });
-    }
+    filter() {
+        const search = new RegExp(this.searchInput.value, 'i');
+        this.filtered = this.list.filter((good) => search.test(good.title));
 
-    _onError(err) {
-        console.log(err);
+        this.view.render(this.filtered);
     }
   
     fetchGoods() {
-        let pr = new Promise((resolve, reject) => {
-            send(reject, resolve, `${URL_API}showcase/`)
+        fetch(`${URL_API}showcase/`)
+        .then((res) => {
+            return res.json();
         })
-        .then((response) => {
-            this._onSuccess(response)
-            return response
+        .then((data) => {
+            this.list = data.map((item) => new Good(item));
+            this.filtered = this.list;
+
+            this.view.render(this.filtered);
         })
-        .then(() => {
-            this.render();
-        })
-        return pr
         
     }
   
@@ -180,121 +206,102 @@ class Showcase {
         const idx = this.list.findIndex((good) => id == good.id)
   
         if(idx >= 0) {
-            this.cart.add(this.list[idx])
+            fetch(`${URL_API}cart/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                body: JSON.stringify(this.list[idx])
+            })
+            .then((res) => {
+                if (res.status === 201) {
+                    this.cart.add(this.list[idx]);
+                }
+            })            
         }
-    }
-
-    render() {
-        let listHTML = '';
-        this.list.forEach(good => {listHTML += good.render()});
-        document.querySelector('.goods-list').innerHTML = listHTML;
     }
 }
 
+
+class ShowcaseView {
+    constructor(containerSelector) {
+        this.container = document.querySelector(containerSelector);
+    }
+
+    setBuyClickHandler(callback) {
+        this.container.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') {
+                const id = event.target.dataset.id;
+
+                callback(id);
+            }
+        })
+    }
+
+    render(list) {
+        this.container.textContent = '';
+
+        const template = list.map((good) => `
+            <div class="goods-item">
+                <h3 class='goods-item_title'>${good.getTitle()}</h3>
+                <p class='goods-item_price'>${good.getPrice()} руб.</p>
+                <button class="cart-button" data-id="${good.id}">Купить</button>
+            </div>
+        `).join('');
+
+        this.container.insertAdjacentHTML('afterbegin', template);
+    }
+}
+
+class CartView {
+    constructor(containerSelector) {
+        this.container = document.querySelector(containerSelector);
+        this.closeBtn = this.container.querySelector('#close-btn');
+        this.listContainer = this.container.querySelector('.cart-list');
+
+        this.closeBtn.addEventListener('click', this.close.bind(this));
+    }
+
+    open() {
+        this.container.style.display = 'block';
+    }
+
+    close() {
+        this.container.style.display = 'none';
+    }
+
+    setRemoveClickHandler(callback) {
+        this.container.addEventListener('click', (event) => {
+            if(event.target.tagName === "BUTTON") {
+                const id = event.target.dataset.id;
+        
+                callback(id);
+            }
+        })
+    }
+
+    render(list) {
+        this.listContainer.textContent = '';
+    
+        const template = list.map((good) => `
+          <div class="goods-item">
+            <h3 class='goods-item_title'>${good.getTitle()} x ${good.getCount()}</h3>
+            <p class='goods-item_price'>${good.getPrice()} руб.</p>
+            <button class="cart-button" data-id="${good.id}">Удалить</button>
+          </div>
+        `).join('');
+    
+        this.listContainer.insertAdjacentHTML('afterbegin', template);
+    }
+}
 
 
 const cart = new Cart()
 const showcase = new Showcase(cart)
   
-let prom = showcase.fetchGoods();
+const cartBtn = document.querySelector('#cart-button')
 
-prom.then(() => {
+cartBtn.addEventListener('click', cart.open.bind(cart))
 
-    showcase.addToCart(1)
-    showcase.addToCart(2)
-    showcase.addToCart(3)
-    showcase.addToCart(1)
-    cart.remove(3);
-})
-    
-console.log(showcase, cart)
-
-
-// В тексте с прямой речью заменить одинарные кавычки на двойные
-
-let modifyButton = document.getElementById('modify_text')
-modifyButton.addEventListener('click', function(){
-    let text = document.getElementById('text');
-    let textOld = text.textContent;
-    text.innerText = textOld.replace(/\B'|'\B/g, '"');
-})
-
-
-// Форма обратной связи с валидацией введенных данных
-
-let inputArea = document.getElementsByClassName('form__input')
-let errorTexts = document.getElementsByClassName('error_text')
-
-function resetErrors() {
-    for (let i = 0; i < inputArea.length; i++) {
-        let objectClass = inputArea[i].classList;
-        if (objectClass.contains('input_error')) {
-            objectClass.remove('input_error');
-        }
-    }
-
-    for (let i = 0; i < errorTexts.length; i++) {
-        errorTexts[i].innerText = '';
-    }
-}
-
-let formButton = document.getElementById('send_feedback')
-formButton.addEventListener('click', function(){
-    let form = document.forms.feedbackForm;
-    let formHead = document.getElementById('form__head');
-    let name = form.elements.name;
-    let email = form.elements.email;
-    let phone = form.elements.phone;
-    let nameRegexp = /^[A-Za-zА-Яа-я ]+$/;
-    let emailRegexp = /^[-._a-z0-9]+@(?:[a-z0-9][-a-z0-9]+\.)+[a-z]{2,6}$/;
-    let phoneRegexp = /^\+\d{1}\(\d{3}\)\d{3}-\d{4}$/;
-    let flag = false;
-    resetErrors();
-    console.log('form_validate');
-    
-    if (name.value == '') {
-        errorTexts[0].innerText = 'Поле "Имя" обязательно для заполнения';
-        name.classList.add('input_error');
-        flag = false;
-
-    } else if (!name.value.match(nameRegexp)) {
-        errorTexts[0].innerText = 'Имя может содержать только буквы';
-        name.classList.add('input_error');
-        flag = false;
-    } else {
-        flag = true;
-    }
-
-    if (email.value == '') {
-        errorTexts[1].innerText = 'Поле "E-mail" обязательно для заполнения';
-        email.classList.add('input_error');
-        flag = false;
-
-    } else if (!email.value.match(emailRegexp)) {
-        errorTexts[1].innerText = 'E-mail должен иметь вид mymail@mail.ru, или my.mail@mail.ru, или my-mail@mail.ru.';
-        email.classList.add('input_error');
-        flag = false;
-    } else {
-        flag = true;
-    }
-
-    if (phone.value == '' || phone.value == '+7(000)000-0000') {
-        errorTexts[2].innerText = 'Поле "Телефон" обязательно для заполнения';
-        phone.classList.add('input_error');
-        flag = false;
-
-    } else if (!phone.value.match(phoneRegexp)) {
-        errorTexts[2].innerText = 'Телефон должен иметь вид +7(000)000-0000';
-       phone.classList.add('input_error');
-       flag = false;
-    } else {
-        flag = true;
-    }
-
-    if (flag) {
-        formHead.innerText = 'Форма отправлена, спасибо';
-    } else {
-        formHead.innerText = 'Ошибка в заполнении формы';
-    }
-
-})
+cart.fetchGoods();
+showcase.fetchGoods();
