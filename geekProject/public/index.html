@@ -5,27 +5,25 @@
   	<title>eShop</title>
 </head>
 <body>
-  	<header class="top">
-    	<button type="button" class="cart-button" id="cart-button">
-			Корзина
-		</button>
-		<input class="search-input" type="text" id="search-input" />
-    	<button class="cart-button" id="search-btn">Поиск</button>
-  	</header>
-  	<main>
-    
-    	<div class="goods-list"></div>
+    <div id="app">
+        <header class="top">
+            <button v-on:click="onCartView" type="button" class="cart-button" id="cart-button">
+                Корзина
+            </button>
+            <input class="search-input" type="text" id="search-input" />
+            <button class="cart-button" id="search-btn">Поиск</button>
+        </header>
+        <main>
+            <showcase :list="showcase" v-on:add-cart="onAddCart"></showcase>
+        </main>
 
-  	</main>
-
-	
-	<div class="modal">
-		<button class="cart-button" id="close-btn">Закрыть</button>
-		<div class="cart-list"></div>
-	</div>
+        <cart v-if="isCartVisible" :list="cart" v-on:cart-close="onCartView" v-on:remove-cart="onDeleteFromCart"></cart>
+    </div>
 	  
-	
-
+	<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="js/card.js"></script>
+    <script src="js/showcase.js"></script>
+    <script src="js/cart.js"></script>
   	<script src="js/script.js"></script>
 </body>
 </html>
