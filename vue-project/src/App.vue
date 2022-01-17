@@ -1,0 +1,119 @@
+<template>
+  <div id="nav">
+    <router-view/>
+  </div>
+  
+</template>
+
+<script>
+export default {
+  mounted() {
+    this.$store.dispatch('loadShowcase')
+    this.$store.dispatch('loadCart')
+  }
+}
+</script>
+
+<style>
+  .top {
+	background-color: #dcdcdc;
+	display: flex;
+	justify-content: space-around;
+  }
+  .cart-button {
+	  background: #5A98D0;
+    box-shadow: 5px 10px 20px rgba(53, 110, 173, 0.2);
+    border-radius: 10px;
+    font-size: 16px;
+    line-height: 26px;
+    text-align: center;
+    letter-spacing: 0.04em;
+    color: #FFFFFF;
+    text-decoration: none;
+    padding: 10px 25px;
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+  }
+
+  .search-input {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .goods-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .goods-item {
+    width: 359px;
+    padding: 44px 32px;
+    box-sizing: border-box;
+    background: #FFFFFF;
+    box-shadow: 5px 20px 50px rgba(16, 112, 177, 0.2);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .goods-item_title {
+    text-align: center;
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 74px;
+    letter-spacing: 0.04em;
+  }
+
+  .goods-item_price {
+    font-weight: 300;
+    font-size: 36px;
+    line-height: 46px;
+    text-align: center;
+    letter-spacing: 0.05em;
+    color: #000000
+  }
+
+  .modal {
+    width: 800px;
+    min-height: 600px;
+    position: absolute;
+    top: 100px;
+    left: calc(50% - 400px);
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 3px;
+    padding: 20px;
+  }
+
+  .cart-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .modal-body {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+
+  .form__input_item {
+    list-style-type: none;
+    margin-bottom: 20px;
+  }
+
+  .error_text {
+    color: red;
+  }
+
+  .input_error {
+    border-color: red;
+  }
+</style>
